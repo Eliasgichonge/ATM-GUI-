@@ -5,7 +5,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ATMGUI extends JFrame {
@@ -17,7 +19,7 @@ public class ATMGUI extends JFrame {
     private Customer currentCustomer;
     private CardLayout cardLayout;
     private JPanel mainPanel;
-
+ 
     public ATMGUI() {
         super("Gsu ATM Simulator");
         setSize(500, 500);
@@ -34,6 +36,9 @@ public class ATMGUI extends JFrame {
 
         JPanel atmPanel = createATMPanel();
         mainPanel.add(atmPanel, "ATM");
+
+        JPanel historyPanel = createHistoryPanel();
+        mainPanel.add(historyPanel, "History");
 
         add(mainPanel);
         cardLayout.show(mainPanel, "Welcome");
@@ -95,11 +100,13 @@ public class ATMGUI extends JFrame {
         JButton withdrawButton = new JButton("Withdraw");
         JButton depositButton = new JButton("Deposit");
         JButton balanceButton = new JButton("Check Balance");
+        JButton historyButton = new JButton("Transaction History");
         JButton logoutButton = new JButton("Logout");
 
         buttonPanel.add(withdrawButton);
         buttonPanel.add(depositButton);
         buttonPanel.add(balanceButton);
+        buttonPanel.add(historyButton);
         buttonPanel.add(logoutButton);
 
         panel.add(buttonPanel, BorderLayout.CENTER);
@@ -112,7 +119,23 @@ public class ATMGUI extends JFrame {
         withdrawButton.addActionListener(e -> handleTransaction("Withdraw"));
         depositButton.addActionListener(e -> handleTransaction("Deposit"));
         balanceButton.addActionListener(e -> displayDynamicBalance());
+        historyButton.addActionListener(e -> showTransactionHistory());
         logoutButton.addActionListener(e -> logout());
+
+        return panel;
+    }
+
+    private JPanel createHistoryPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JTextArea historyArea = new JTextArea(15, 30);
+        historyArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(historyArea);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JButton backButton = new JButton("Back to ATM");
+        backButton.addActionListener(e -> cardLayout.show(mainPanel, "ATM"));
+        panel.add(backButton, BorderLayout.SOUTH);
 
         return panel;
     }
@@ -160,11 +183,13 @@ public class ATMGUI extends JFrame {
                 }
                 if ("Deposit".equals(transactionType)) {
                     currentCustomer.deposit(amount);
+                    currentCustomer.addTransaction("Deposited TShs." + amount);
                 } else if ("Withdraw".equals(transactionType)) {
                     if (!currentCustomer.withdraw(amount)) {
                         JOptionPane.showMessageDialog(this, "Insufficient funds.");
                         return;
                     }
+                    currentCustomer.addTransaction("Withdrew TShs." + amount);
                 }
                 updateBalance();
                 transactionArea.append(transactionType + ": TShs." + amount + "\n");
@@ -183,6 +208,18 @@ public class ATMGUI extends JFrame {
         double currentBalance = currentCustomer.getBalance();
         balanceLabel.setText(String.format("Balance: TShs. %.2f", currentBalance));
         transactionArea.append("Checked Balance: TShs." + currentBalance + "\n");
+    }
+
+    private void showTransactionHistory() {
+        if (currentCustomer == null) {
+            JOptionPane.showMessageDialog(this, "Please log in first.");
+            return;
+        }
+
+        JPanel historyPanel = (JPanel) mainPanel.getComponent(2);
+        JTextArea historyArea = (JTextArea) ((JScrollPane) historyPanel.getComponent(0)).getViewport().getView();
+        historyArea.setText(currentCustomer.getTransactionHistory());
+        cardLayout.show(mainPanel, "History");
     }
 
     private void logout() {
@@ -217,11 +254,13 @@ class Customer {
     private String username;
     private String password;
     private double balance;
+    private List<String> transactionHistory;
 
     public Customer(String username, String password, double balance) {
         this.username = username;
         this.password = password;
         this.balance = balance;
+        this.transactionHistory = new ArrayList<>();
     }
 
     public String getPassword() {
@@ -242,5 +281,17 @@ class Customer {
             return true;
         }
         return false;
+    }
+
+    public void addTransaction(String transaction) {
+        transactionHistory.add(transaction);
+    }
+
+    public String getTransactionHistory() {
+        StringBuilder history = new StringBuilder("Transaction History:\n");
+        for (String transaction : transactionHistory) {
+            history.append(transaction).append("\n");
+        }
+        return history.toString();
     }
 }
