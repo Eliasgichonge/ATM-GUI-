@@ -3,11 +3,12 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DynamicATMGUIWithBalance extends JFrame {
-
+public class EnhancedATMGUI extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JTextArea transactionArea;
@@ -17,11 +18,10 @@ public class DynamicATMGUIWithBalance extends JFrame {
     private CardLayout cardLayout;
     private JPanel mainPanel;
 
-    public DynamicATMGUIWithBalance() {
+    public EnhancedATMGUI() {
         super("Gsu ATM Simulator");
-        setSize(500, 500); // Reduced size
+        setSize(500, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
         initializeGUI();
     }
 
@@ -29,11 +29,9 @@ public class DynamicATMGUIWithBalance extends JFrame {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-        // Welcome Screen
         JPanel welcomePanel = createWelcomePanel();
         mainPanel.add(welcomePanel, "Welcome");
 
-        // Main ATM Screen
         JPanel atmPanel = createATMPanel();
         mainPanel.add(atmPanel, "ATM");
 
@@ -44,14 +42,14 @@ public class DynamicATMGUIWithBalance extends JFrame {
     private JPanel createWelcomePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.LIGHT_GRAY);
-        panel.setBorder(new EmptyBorder(5, 5, 5, 5)); // Reduced border
+        panel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         JLabel welcomeLabel = new JLabel("Welcome to the Dynamic ATM!", JLabel.CENTER);
-        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 20)); // Reduced font size
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 20));
         panel.add(welcomeLabel, BorderLayout.NORTH);
 
-        JPanel inputPanel = new JPanel(new GridLayout(3, 2, 5, 5)); // Reduced padding
-        inputPanel.setBorder(new EmptyBorder(5, 10, 5, 10)); // Reduced border
+        JPanel inputPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+        inputPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
 
         usernameField = new JTextField();
         passwordField = new JPasswordField();
@@ -68,7 +66,7 @@ public class DynamicATMGUIWithBalance extends JFrame {
         panel.add(inputPanel, BorderLayout.CENTER);
 
         JLabel footer = new JLabel("© 2024 GSU CEO ATM", JLabel.CENTER);
-        footer.setFont(new Font("Arial", Font.ITALIC, 10)); // Reduced font size
+        footer.setFont(new Font("Arial", Font.ITALIC, 10));
         panel.add(footer, BorderLayout.SOUTH);
 
         loginButton.addActionListener(e -> handleLogin());
@@ -79,21 +77,20 @@ public class DynamicATMGUIWithBalance extends JFrame {
 
     private JPanel createATMPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-
         JPanel topPanel = new JPanel(new BorderLayout());
         JLabel titleLabel = new JLabel("Dynamic ATM", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20)); // Reduced font size
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         topPanel.add(titleLabel, BorderLayout.NORTH);
 
         balanceLabel = new JLabel("Balance: TSh. 0.0", JLabel.CENTER);
-        balanceLabel.setFont(new Font("Arial", Font.PLAIN, 16)); // Reduced font size
+        balanceLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         balanceLabel.setForeground(Color.BLUE);
         topPanel.add(balanceLabel, BorderLayout.SOUTH);
 
         panel.add(topPanel, BorderLayout.NORTH);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 5, 5)); // Reduced padding
-        buttonPanel.setBorder(new EmptyBorder(5, 10, 5, 10)); // Reduced border
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+        buttonPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
 
         JButton withdrawButton = new JButton("Withdraw");
         JButton depositButton = new JButton("Deposit");
@@ -107,7 +104,7 @@ public class DynamicATMGUIWithBalance extends JFrame {
 
         panel.add(buttonPanel, BorderLayout.CENTER);
 
-        transactionArea = new JTextArea(6, 15); // Adjusted size
+        transactionArea = new JTextArea(6, 15);
         transactionArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(transactionArea);
         panel.add(scrollPane, BorderLayout.SOUTH);
@@ -124,7 +121,7 @@ public class DynamicATMGUIWithBalance extends JFrame {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
 
-        if (customers.containsKey(username) && customers.get(username).getPassword().equals(password)) {
+        if (customers.containsKey(username) && customers.get(username).getPassword().equals(hashPassword(password))) {
             currentCustomer = customers.get(username);
             updateBalance();
             transactionArea.setText("Welcome back, " + username + "!\n\n");
@@ -143,7 +140,7 @@ public class DynamicATMGUIWithBalance extends JFrame {
         } else if (customers.containsKey(username)) {
             JOptionPane.showMessageDialog(this, "Username already exists.");
         } else {
-            customers.put(username, new Customer(username, password, 60.0));
+            customers.put(username, new Customer(username, hashPassword(password), 60.0));
             JOptionPane.showMessageDialog(this, "Registration successful!");
         }
     }
@@ -158,6 +155,9 @@ public class DynamicATMGUIWithBalance extends JFrame {
         if (amountStr != null && !amountStr.isEmpty()) {
             try {
                 double amount = Double.parseDouble(amountStr);
+                if (amount <= 0) {
+                    throw new NumberFormatException();
+                }
                 if ("Deposit".equals(transactionType)) {
                     currentCustomer.deposit(amount);
                 } else if ("Withdraw".equals(transactionType)) {
@@ -169,7 +169,7 @@ public class DynamicATMGUIWithBalance extends JFrame {
                 updateBalance();
                 transactionArea.append(transactionType + ": TShs." + amount + "\n");
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Invalid amount.");
+                JOptionPane.showMessageDialog(this, "Invalid or negative amount.");
             }
         }
     }
@@ -180,24 +180,9 @@ public class DynamicATMGUIWithBalance extends JFrame {
             return;
         }
 
-        // Create a smooth animation for balance update
-        new Thread(() -> {
-            double currentBalance = currentCustomer.getBalance();
-            double displayedBalance = 0;
-            balanceLabel.setForeground(Color.GREEN); // Change color to green during animation
-
-            while (displayedBalance < currentBalance) {
-                displayedBalance += Math.min(10, currentBalance - displayedBalance); // Increment by 10
-                balanceLabel.setText(String.format("Balance: TShs. %.2f", displayedBalance));
-                try {
-                    Thread.sleep(50); // Pause for animation effect
-                } catch (InterruptedException ignored) {
-                }
-            }
-
-            balanceLabel.setForeground(Color.BLUE); // Revert color after animation
-            transactionArea.append("Checked Balance: TShs." + currentBalance + "\n");
-        }).start();
+        double currentBalance = currentCustomer.getBalance();
+        balanceLabel.setText(String.format("Balance: TShs. %.2f", currentBalance));
+        transactionArea.append("Checked Balance: TShs." + currentBalance + "\n");
     }
 
     private void logout() {
@@ -209,8 +194,22 @@ public class DynamicATMGUIWithBalance extends JFrame {
         balanceLabel.setText(String.format("Balance: TShs. %.2f", currentCustomer.getBalance()));
     }
 
+    private String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = md.digest(password.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashedBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Hashing algorithm not found", e);
+        }
+    }
+
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new DynamicATMGUIWithBalance().setVisible(true));
+        SwingUtilities.invokeLater(() -> new EnhancedATMGUI().setVisible(true));
     }
 }
 
