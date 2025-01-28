@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.prefs.Preferences;
 
 public class ATMGUI extends JFrame {
     private JTextField usernameField;
@@ -19,17 +20,21 @@ public class ATMGUI extends JFrame {
     private Customer currentCustomer;
     private CardLayout cardLayout;
     private JPanel mainPanel;
- 
+    private Preferences prefs;
+
     public ATMGUI() {
         super("Gsu ATM Simulator");
-        setSize(500, 500);
+        setSize(600, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null); // Center the window
+        prefs = Preferences.userNodeForPackage(ATMGUI.class);
         initializeGUI();
     }
 
     private void initializeGUI() {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
+        mainPanel.setBackground(new Color(240, 240, 240));
 
         JPanel welcomePanel = createWelcomePanel();
         mainPanel.add(welcomePanel, "Welcome");
@@ -46,15 +51,16 @@ public class ATMGUI extends JFrame {
 
     private JPanel createWelcomePanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.LIGHT_GRAY);
-        panel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JLabel welcomeLabel = new JLabel("Welcome to the Dynamic ATM!", JLabel.CENTER);
-        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        welcomeLabel.setForeground(new Color(50, 50, 150));
         panel.add(welcomeLabel, BorderLayout.NORTH);
 
         JPanel inputPanel = new JPanel(new GridLayout(3, 2, 5, 5));
-        inputPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
+        inputPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         usernameField = new JTextField();
         passwordField = new JPasswordField();
@@ -71,31 +77,37 @@ public class ATMGUI extends JFrame {
         panel.add(inputPanel, BorderLayout.CENTER);
 
         JLabel footer = new JLabel("© 2024 GSU CEO ATM", JLabel.CENTER);
-        footer.setFont(new Font("Arial", Font.ITALIC, 10));
+        footer.setFont(new Font("Arial", Font.ITALIC, 12));
         panel.add(footer, BorderLayout.SOUTH);
 
         loginButton.addActionListener(e -> handleLogin());
         registerButton.addActionListener(e -> handleRegister());
+
+        // Load last entered username
+        String lastUsername = prefs.get("lastUsername", "");
+        usernameField.setText(lastUsername);
 
         return panel;
     }
 
     private JPanel createATMPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        JPanel topPanel = new JPanel(new BorderLayout());
-        JLabel titleLabel = new JLabel("Dynamic ATM", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        topPanel.add(titleLabel, BorderLayout.NORTH);
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        JPanel titlePanel = new JPanel();
+        JLabel titleLabel = new JLabel("Dynamic ATM");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titlePanel.add(titleLabel);
+        panel.add(titlePanel, BorderLayout.NORTH);
 
         balanceLabel = new JLabel("Balance: TSh. 0.0", JLabel.CENTER);
-        balanceLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        balanceLabel.setForeground(Color.BLUE);
-        topPanel.add(balanceLabel, BorderLayout.SOUTH);
-
-        panel.add(topPanel, BorderLayout.NORTH);
+        balanceLabel.setFont(new Font("Arial", Font.PLAIN, 18));
+        balanceLabel.setForeground(new Color(0, 128, 0)); // Green color for balance
+        panel.add(balanceLabel, BorderLayout.SOUTH);
 
         JPanel buttonPanel = new JPanel(new GridLayout(3, 2, 5, 5));
-        buttonPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
+        buttonPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JButton withdrawButton = new JButton("Withdraw");
         JButton depositButton = new JButton("Deposit");
@@ -113,8 +125,10 @@ public class ATMGUI extends JFrame {
 
         transactionArea = new JTextArea(6, 15);
         transactionArea.setEditable(false);
+        transactionArea.setLineWrap(true);
+        transactionArea.setWrapStyleWord(true);
         JScrollPane scrollPane = new JScrollPane(transactionArea);
-        panel.add(scrollPane, BorderLayout.SOUTH);
+        panel.add(scrollPane, BorderLayout.EAST);
 
         withdrawButton.addActionListener(e -> handleTransaction("Withdraw"));
         depositButton.addActionListener(e -> handleTransaction("Deposit"));
@@ -127,6 +141,7 @@ public class ATMGUI extends JFrame {
 
     private JPanel createHistoryPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
         JTextArea historyArea = new JTextArea(15, 30);
         historyArea.setEditable(false);
@@ -149,6 +164,9 @@ public class ATMGUI extends JFrame {
             updateBalance();
             transactionArea.setText("Welcome back, " + username + "!\n\n");
             cardLayout.show(mainPanel, "ATM");
+
+            // Save the last entered username
+            prefs.put("lastUsername", username);
         } else {
             JOptionPane.showMessageDialog(this, "Invalid username or password.");
         }
