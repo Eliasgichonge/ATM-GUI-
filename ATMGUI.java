@@ -8,7 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EnhancedATMGUI extends JFrame {
+public class ATMGUI extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JTextArea transactionArea;
@@ -18,7 +18,7 @@ public class EnhancedATMGUI extends JFrame {
     private CardLayout cardLayout;
     private JPanel mainPanel;
 
-    public EnhancedATMGUI() {
+    public ATMGUI() {
         super("Gsu ATM Simulator");
         setSize(500, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -209,7 +209,7 @@ public class EnhancedATMGUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new EnhancedATMGUI().setVisible(true));
+        SwingUtilities.invokeLater(() -> new ATMGUI().setVisible(true));
     }
 }
 
